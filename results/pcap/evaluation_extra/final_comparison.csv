@@ -1,0 +1,5 @@
+model,Original test,Mean over 3 seeds,Unseen HIGH
+QNN,1.0,1.0,1.0
+QAE+QNN,1.0,1.0,1.0
+RF,1.0,1.0,1.0
+MLP,1.0,1.0,1.0

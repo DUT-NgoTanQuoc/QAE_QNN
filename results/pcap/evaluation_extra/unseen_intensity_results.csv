@@ -1,0 +1,6 @@
+experiment,seed,model,accuracy,macro_f1,binary_f1,binary_auc,seconds,test_samples
+Unseen HIGH intensity,42,QAE,0.9224137931034483,,0.9403973509933775,1.0,0.34255375700013246,116
+Unseen HIGH intensity,42,QNN,1.0,1.0,1.0,1.0,1.2897711969999364,116
+Unseen HIGH intensity,42,QAE+QNN,1.0,1.0,1.0,1.0,1.564064736000546,116
+Unseen HIGH intensity,42,RF,1.0,1.0,1.0,1.0,0.22684417499931442,116
+Unseen HIGH intensity,42,MLP,1.0,1.0,1.0,1.0,0.254119181000533,116

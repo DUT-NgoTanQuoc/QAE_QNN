@@ -1,0 +1,13 @@
+split,label,samples,pcaps
+test,HTTP,15,3
+test,Normal,40,8
+test,SYN,18,3
+test,UDP,10,2
+train,HTTP,45,8
+train,Normal,121,24
+train,SYN,48,8
+train,UDP,45,8
+val,HTTP,12,2
+val,Normal,45,9
+val,SYN,12,2
+val,UDP,18,3

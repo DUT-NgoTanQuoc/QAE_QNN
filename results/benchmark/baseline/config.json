@@ -1,0 +1,22 @@
+{
+  "version": "v2_lite_1",
+  "k": 2,
+  "seeds": [
+    42
+  ],
+  "fit": 50,
+  "val": 50,
+  "layers": 1,
+  "it": 60,
+  "epochs": 60,
+  "preprocess": "minmax",
+  "models": [
+    "MLP",
+    "RF",
+    "XGBoost",
+    "CNN",
+    "QNN",
+    "QAE+MLP",
+    "QAE+QNN"
+  ]
+}

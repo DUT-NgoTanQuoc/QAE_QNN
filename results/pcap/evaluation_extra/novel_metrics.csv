@@ -1,0 +1,2 @@
+model,test_samples,correct,accuracy,macro_f1_present_classes
+QAE+QNN,50,50,1.0,1.0

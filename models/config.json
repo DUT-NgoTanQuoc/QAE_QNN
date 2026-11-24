@@ -1,0 +1,28 @@
+{
+  "window": 5,
+  "layers": 1,
+  "classes": [
+    "Normal",
+    "SYN",
+    "HTTP",
+    "UDP"
+  ],
+  "features": [
+    "f1",
+    "f2",
+    "f3",
+    "f4",
+    "f5",
+    "f6"
+  ],
+  "threshold": 0.0011343907644426237,
+  "seed": 42,
+  "epochs": 60,
+  "extractor": "algorithm2_adapted_nonempty_full_v1",
+  "qae": {
+    "loss": 0.0003992866501055792,
+    "iterations": 12,
+    "converged": true,
+    "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL"
+  }
+}
