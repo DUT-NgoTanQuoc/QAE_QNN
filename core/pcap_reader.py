@@ -17,25 +17,39 @@ def open_capture(source):
 
 
 class _CaptureStream:
-    """Bound Scapy's reads by the actual file size and flag partial reads."""
+    """Track byte position and require complete reads within the capture."""
 
     def __init__(self, stream, size):
         self.stream = stream
-        self.size = size
+        self.remaining = size
 
     def read(self, size):
-        remaining = self.size - self.stream.tell()
-        if 0 < remaining < size:
+        if size > self.remaining:
             raise CaptureError("Capture bị cắt giữa packet hoặc block")
-        return self.stream.read(size) if remaining else b""
+        data = self.stream.read(size)
+        if len(data) != size:
+            raise CaptureError("Capture bị cắt giữa packet hoặc block")
+        self.remaining -= size
+        return data
 
 
 def packets(stream, size):
     stream.seek(0)
-    reader = RawPcapReader(_CaptureStream(stream, size))
+    bounded = _CaptureStream(stream, size)
+    reader = RawPcapReader(bounded)
     classic = hasattr(reader, "nano")
     resolution = Decimal(10**9 if reader.nano else 10**6) if classic else None
-    for raw, meta in reader:
+    # Scapy's iterator treats some malformed PCAPNG blocks as normal EOF.
+    # Stop only at a known file boundary and preserve errors from parsing a record.
+    read_record = reader._read_packet if classic else reader._read_block
+    while bounded.remaining:
+        try:
+            record = read_record()
+        except EOFError as exc:
+            raise CaptureError("Capture chứa packet hoặc block lỗi") from exc
+        if record is None:
+            continue
+        raw, meta = record
         if classic:
             if len(raw) != min(meta.caplen, MTU):
                 raise CaptureError("Capture bị cắt giữa packet")
@@ -47,8 +61,6 @@ def packets(stream, size):
             timestamp = Decimal((meta.tshigh << 32) + meta.tslow) / meta.tsresol
             linktype = meta.linktype
         yield float(timestamp), raw, linktype, classic
-    if stream.tell() != size:
-        raise CaptureError("Capture chứa packet hoặc block lỗi")
 
 
 def decode(raw, linktype):

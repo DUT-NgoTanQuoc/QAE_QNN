@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
+
 from core.config import MODEL_DIR
 from core.model_loader import ModelLoadError, load_model
 
@@ -11,11 +13,17 @@ def main():
     args = parser.parse_args()
     try:
         engine = load_model(args.models)
-        parameters = {key: tuple(value.shape) for key, value in engine.model.state_dict().items()}
-        row = engine.predict([[0., 0., 0., 0., 0., 0.]]).iloc[0]
-        print(f"CPU | {parameters} | window={engine.config.window}s | classes={engine.config.classes}")
-        print(f"Kiểm tra tensor 0 | prediction={row.prediction} | confidence={row.confidence:.6f}")
-    except (ModelLoadError, ValueError) as exc:
+        parameters = {key: (tuple(value.shape), str(value.dtype))
+                      for key, value in engine.model.state_dict().items()}
+        theta = np.load(args.models / "qae_theta.npy", allow_pickle=False)
+        config = engine.config
+        print(f"CPU | {parameters}")
+        print(f"window={config.window}s | classes={config.classes} | features={config.features}")
+        print(f"scaler: clip={engine.scaler.clip}, range={engine.scaler.feature_range}, "
+              f"n_samples={engine.scaler.n_samples_seen_}, dtype={engine.scaler.scale_.dtype}")
+        print(f"QAE: layers={config.layers} | theta={theta.shape} {theta.dtype} | "
+              f"operator={engine.qae.operator.shape} {engine.qae.operator.dtype} | threshold={config.threshold}")
+    except (ModelLoadError, OSError, ValueError) as exc:
         parser.exit(1, f"{exc}\n")
 
 

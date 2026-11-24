@@ -1,12 +1,15 @@
 import io
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from decimal import Decimal
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import torch
-from scapy.all import ARP, Ether, IP, TCP, UDP, PcapNgWriter, wrpcap
+from scapy.all import ARP, Ether, IP, TCP, UDP, PcapNgWriter, PcapWriter, wrpcap
 
 from core.config import FEATURES, MODEL_DIR
 from core.feature_extractor import extract_pcap
@@ -15,6 +18,7 @@ from core.pcap_analysis import analyze_pcap
 from core.pcap_reader import CaptureError
 from core.pcap_replay import Replay
 from core.preprocessing import transform
+from scripts.analyze_pcap import main as analyze_cli
 
 
 def stamped(packet, timestamp):
@@ -83,6 +87,27 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(CaptureError):
             extract_pcap(io.BytesIO(path.read_bytes()[:-1]))
 
+    def test_pcapng_invalid_last_block_is_not_end_of_file(self):
+        path = self.directory / "capture.pcapng"
+        with PcapNgWriter(str(path)) as writer:
+            writer.write(fixture_packets())
+        data = bytearray(path.read_bytes())
+        data[-4:] = b"\0" * 4
+        with self.assertRaises(CaptureError):
+            analyze_pcap(io.BytesIO(data), self.engine)
+
+    def test_nanosecond_pcap_window_boundaries(self):
+        path = self.directory / "nanosecond.pcap"
+        timestamps = ["1005", "1000", "1004.999999999", "1010"]
+        with PcapWriter(str(path), nano=True) as writer:
+            for packet, timestamp in zip(fixture_packets(), timestamps):
+                packet.time = Decimal(timestamp)
+                writer.write(packet)
+        result = extract_pcap(path)
+        self.assertEqual(result.packets, 4)
+        self.assertEqual(result.windows.window_start_s.tolist(), [0, 5])
+        self.assertEqual(result.windows.f1.tolist(), [2, 1])
+
     def test_preprocessing_and_batch(self):
         rows = extract_pcap(self.capture).windows
         reordered = rows.loc[:, list(reversed(FEATURES))].assign(label="not an input")
@@ -111,6 +136,30 @@ class PipelineTests(unittest.TestCase):
         analysis = analyze_pcap(self.capture, self.engine)
         exported = pd.read_csv(io.BytesIO(analysis.csv_bytes()))
         pd.testing.assert_frame_equal(exported, analysis.results, check_dtype=False)
+
+    def test_cli_export_and_failure_exit_codes(self):
+        destination = self.directory / "result.csv"
+        argv = ["analyze_pcap", str(self.capture), "--csv", str(destination)]
+        output = io.StringIO()
+        with patch("sys.argv", argv), redirect_stdout(output):
+            analyze_cli()
+        self.assertIn("2 cửa sổ × 5s", output.getvalue())
+        self.assertIn("extraction:", output.getvalue())
+        expected = analyze_pcap(self.capture, self.engine).results.drop(columns="inference_ms")
+        actual = pd.read_csv(destination).drop(columns="inference_ms")
+        pd.testing.assert_frame_equal(actual, expected, check_dtype=False)
+        with patch("sys.argv", argv), redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as exit_info:
+            analyze_cli()
+        self.assertEqual(exit_info.exception.code, 1)
+        for content in (b"", self.capture.read_bytes()[:-1], b"invalid format"):
+            path = self.directory / "input.pcap"
+            path.write_bytes(content)
+            error_output = io.StringIO()
+            with (patch("sys.argv", ["analyze_pcap", str(path)]), redirect_stderr(error_output),
+                  self.assertRaises(SystemExit) as exit_info):
+                analyze_cli()
+            self.assertEqual(exit_info.exception.code, 1)
+            self.assertTrue(error_output.getvalue())
 
     def test_replay(self):
         replay = Replay(extract_pcap(self.capture), self.capture.name)

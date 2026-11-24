@@ -12,14 +12,15 @@ class StreamlitTests(unittest.TestCase):
     def visit(self, page):
         self.app.sidebar.radio[0].set_value(page).run()
         self.assertFalse(self.app.exception)
-        self.assertIn(page, [header.value for header in self.app.header])
+        rendered = " ".join(item.value for item in self.app.markdown)
+        self.assertIn(page, rendered)
 
     def button(self, label):
         return next(button for button in self.app.button if button.label == label)
 
     def test_pages(self):
-        self.assertTrue(self.app.success)
-        self.assertTrue(self.app.info)
+        self.assertIn("MODEL READY", " ".join(item.value for item in self.app.markdown))
+        self.assertIn("No analysis session yet", " ".join(item.value for item in self.app.markdown))
         for page in ("PCAP Analysis", "PCAP Replay", "Benchmark Research", "Model Evaluation", "About"):
             with self.subTest(page=page):
                 self.visit(page)
@@ -30,6 +31,7 @@ class StreamlitTests(unittest.TestCase):
         if not demo.is_file():
             self.skipTest("Chạy scripts.prepare_demo để kiểm thử capture thật")
         self.visit("PCAP Analysis")
+        self.app.radio(key="analysis_mode").set_value("Demo library").run()
         self.app.selectbox(key="analysis_demo").set_value(demo).run()
         self.button("Analyze Traffic").click().run()
         self.assertFalse(self.app.exception)
@@ -39,13 +41,15 @@ class StreamlitTests(unittest.TestCase):
         self.assertEqual(result.results["binary_prediction"].tolist(), ["Benign"] * 5)
         self.assertEqual(len(self.app.get("download_button")), 1)
         self.visit("Dashboard")
-        self.assertEqual(next(metric.value for metric in self.app.metric if metric.label == "Cửa sổ"), "5")
+        self.assertEqual(next(metric.value for metric in self.app.metric
+                              if metric.label == "Analyzed windows"), "5")
 
     def test_replay_controls(self):
         demo = ROOT / "data" / "pcap" / "UDP_LOW_30s_20260729_120030.pcap"
         if not demo.is_file():
             self.skipTest("Chạy scripts.prepare_demo để kiểm thử capture thật")
         self.visit("PCAP Replay")
+        self.app.radio(key="replay_mode").set_value("Demo library").run()
         self.app.selectbox(key="replay_demo").set_value(demo).run()
         self.button("Start").click().run()
         self.assertFalse(self.app.exception)

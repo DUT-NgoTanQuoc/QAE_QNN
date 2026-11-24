@@ -34,14 +34,18 @@ def _load_cached(directory, fingerprint):
     if not isinstance(scaler, MinMaxScaler):
         raise ValueError("Scaler phải là MinMaxScaler")
     check_is_fitted(scaler)
-    if scaler.n_features_in_ != len(config.features) or not scaler.clip:
-        raise ValueError("Scaler không khớp kích thước feature hoặc clip=True")
+    if (scaler.n_features_in_ != len(config.features) or not scaler.clip
+            or tuple(scaler.feature_range) != (0, 1)):
+        raise ValueError("Scaler cần sáu feature, feature_range=(0, 1) và clip=True")
+    if hasattr(scaler, "feature_names_in_") and tuple(scaler.feature_names_in_) != config.features:
+        raise ValueError("Thứ tự feature của scaler không khớp config")
     if any(values.shape != (len(config.features),) or not np.isfinite(values).all()
            for values in (scaler.scale_, scaler.min_)):
         raise ValueError("Scaler chứa hệ số sai kích thước hoặc không hữu hạn")
     theta = np.load(directory / "qae_theta.npy", allow_pickle=False)
-    if theta.shape != (config.layers * 9,) or not np.isfinite(theta).all():
-        raise ValueError("Theta QAE không khớp config")
+    if (theta.shape != (config.layers * 9,) or not np.issubdtype(theta.dtype, np.floating)
+            or not np.isfinite(theta).all()):
+        raise ValueError("Theta QAE cần góc số thực hữu hạn và kích thước khớp config")
     state = torch.load(directory / "hybrid.pt", map_location="cpu", weights_only=True)
     if any(tensor.dtype != torch.float32 or not torch.isfinite(tensor).all() for tensor in state.values()):
         raise ValueError("Checkpoint chứa tensor sai dtype hoặc không hữu hạn")
