@@ -1,6 +1,6 @@
 # Final technical and research review
 
-Review date: 2026-11-24 (Asia/Bangkok)  
+Review date: 2026-11-24 (Asia/Bangkok)
 Scope: tracked source, both training notebooks, exported model/results, local PCAP pipeline, CLI, Streamlit application, tests, dependencies and Git hygiene.
 
 ## Executive verdict
