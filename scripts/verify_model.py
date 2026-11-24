@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,13 @@ def main():
     parser.add_argument("--models", type=Path, default=MODEL_DIR)
     args = parser.parse_args()
     try:
+        checksum_path = args.models / "checksums.sha256"
+        if checksum_path.is_file():
+            for line in checksum_path.read_text(encoding="ascii").splitlines():
+                expected, name = line.split(maxsplit=1)
+                actual = hashlib.sha256((args.models / name).read_bytes()).hexdigest()
+                if actual != expected:
+                    raise ValueError(f"Artifact checksum mismatch: {name}")
         engine = load_model(args.models)
         parameters = {key: (tuple(value.shape), str(value.dtype))
                       for key, value in engine.model.state_dict().items()}

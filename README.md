@@ -18,9 +18,11 @@ QAE và VQNN đều mô phỏng statevector trên máy tính cổ điển. Dự 
 
 ## Cài đặt trên Windows
 
-Từ thư mục dự án, dùng CPython x64 3.11.9 hoặc Python 3.11 tương thích với các wheel trong requirements.
+Yêu cầu CPython x64 3.11, Git, khoảng 3 GB đĩa trống cho môi trường và kết nối mạng khi cài dependency. Không cần GPU. Clone repository rồi chạy từ thư mục gốc:
 
 ```powershell
+git clone https://github.com/DUT-NgoTanQuoc/QAE_QNN.git
+Set-Location QAE_QNN
 python -m venv .venv
 $py = ".\.venv\Scripts\python.exe"
 $env:PYTHONUTF8 = "1"
@@ -32,7 +34,7 @@ $env:PYTHONUTF8 = "1"
 & $py -m streamlit run app.py
 ```
 
-Mở địa chỉ localhost do Streamlit in ra. `verify_inference` dùng feature và prediction xuất từ Colab để kiểm tra checkpoint. PCAP Analysis và Replay đọc nội dung capture mỗi khi người dùng chọn phân tích.
+Mở địa chỉ localhost do Streamlit in ra. `verify_model` kiểm tra checksum bundle trước khi khôi phục model; `verify_inference` dùng feature và prediction xuất từ Colab để kiểm tra checkpoint. PCAP Analysis và Replay đọc nội dung capture mỗi khi người dùng chọn phân tích. Tất cả đường dẫn runtime được suy ra từ thư mục repository; đường dẫn `/content/...` chỉ nằm trong notebook Colab.
 
 ## Model và capture demo
 
@@ -46,6 +48,8 @@ Bốn file demo lấy từ `01_synthetic_data.zip`. Lệnh chuẩn bị kiểm t
 & $py -m scripts.analyze_pcap data/pcap/NORMAL_30s_20260729_121618.pcap --csv normal-results.csv
 & $py -m unittest discover -s tests -v
 ```
+
+Hai AppTest dùng capture thật sẽ bị `skip` khi clone sạch chưa có `data/pcap`. Sau khi chuẩn bị demo, chạy lại test để kiểm chứng Analysis và Replay end-to-end. Không commit ZIP/PCAP vào Git.
 
 CLI đọc tuần tự từ đĩa qua hai lượt và giữ các bộ đếm theo cửa sổ. Streamlit giữ upload trong bộ nhớ và giới hạn 200 MB mỗi file theo mặc định, vì vậy CLI phù hợp với capture lớn. Đầu ra CSV dùng đường dẫn mới để bảo vệ dữ liệu có sẵn.
 
@@ -75,5 +79,7 @@ Thêm `--all-test` vào cả `scripts.prepare_demo` và `scripts.verify_capture`
 Export PCAP ghi QAE+QNN đạt accuracy, macro-F1, binary F1 và binary ROC-AUC bằng 1,0 trên tập test nghiên cứu. QNN, RF và MLP cùng đạt các giá trị này trong bảng đó. Benchmark cuối của CIC-DDoS2019 ghi macro-F1 trung bình 0,86517 cho QAE+QNN V4 trên hai fold. Xem bảng nguồn để đối chiếu số liệu. [PCAP metrics](results/pcap/metrics.csv) · [Benchmark classification summary](results/benchmark/final/classification_summary.csv)
 
 PCAP tổng hợp dùng nhãn ở cấp capture và có feature trùng giữa các split. Benchmark V2/V4 gồm hai fold với seed 42, khác ngân sách tuning và lượng dữ liệu train classifier. Điểm softmax không được kiểm chứng hiệu chuẩn trên lưu lượng mạng thực. Cửa sổ thiếu dữ liệu và capture dưới 5 giây có thể không tạo được dự đoán.
+
+Hệ thống mô phỏng statevector trên CPU cổ điển; kết quả không chứng minh quantum advantage. PCAP Replay là phát lại capture offline, không phải live capture hay giám sát mạng thời gian thực. Xem [NOTICE](NOTICE.md) về provenance và ràng buộc license chưa được upstream làm rõ.
 
 Xem [hướng dẫn trình diễn](docs/DEMO_GUIDE.md), [kiểm tra workspace](docs/PROJECT_AUDIT.md) và [nhật ký kiểm thử](docs/IMPLEMENTATION_PROGRESS.md). Tài liệu phần mềm [Qiskit Quantum Information](https://qiskit.qotlabs.org/docs/api/qiskit/quantum_info) · [PyTorch CPU](https://pytorch.org/get-started/previous-versions/) · [Streamlit fragments](https://docs.streamlit.io/develop/api-reference/execution-flow/st.fragment)
