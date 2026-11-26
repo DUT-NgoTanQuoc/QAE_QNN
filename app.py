@@ -11,25 +11,25 @@ def main():
                        initial_sidebar_state="auto")
     st.markdown(APP_CSS, unsafe_allow_html=True)
     st.sidebar.markdown('<div class="soc-sidebar-brand">QAE-QNN IDS</div>'
-                        '<div class="soc-sidebar-sub">Hybrid Quantum DDoS Detection</div>',
+                        '<div class="soc-sidebar-sub">Phát hiện DDoS bằng mô hình lượng tử lai</div>',
                         unsafe_allow_html=True)
-    page = st.sidebar.radio("Navigation", [
-        "Dashboard", "PCAP Analysis", "PCAP Replay", "Benchmark Research", "Model Evaluation", "About",
-    ], label_visibility="collapsed")
+    traffic_views = {"Bảng điều khiển": dashboard, "Phân tích PCAP": analysis_page,
+                     "Phát lại PCAP": replay_page}
+    research_views = {"Kết quả thực nghiệm": benchmark_page, "Đánh giá mô hình": evaluation_page,
+                      "Giới thiệu": about_page}
+    page = st.sidebar.radio("Điều hướng", [*traffic_views, *research_views], label_visibility="collapsed")
     st.sidebar.markdown("---")
-    st.sidebar.markdown('<div class="soc-status"><strong>● CPU inference ready</strong><br>'
-                        'Offline PCAP analysis<br>5-second windows</div>', unsafe_allow_html=True)
-    if page in ("Dashboard", "PCAP Analysis", "PCAP Replay"):
+    st.sidebar.markdown('<div class="soc-status"><strong>Phân tích PCAP ngoại tuyến</strong><br>'
+                        'Suy luận trên CPU · Cửa sổ 5 giây</div>', unsafe_allow_html=True)
+    if page in traffic_views:
         engine, error = None, None
         try:
             engine = load_model()
         except ModelLoadError as exc:
             error = str(exc)
-        views = {"Dashboard": dashboard, "PCAP Analysis": analysis_page, "PCAP Replay": replay_page}
-        views[page](engine, error)
+        traffic_views[page](engine, error)
     else:
-        views = {"Benchmark Research": benchmark_page, "Model Evaluation": evaluation_page, "About": about_page}
-        views[page]()
+        research_views[page]()
 
 
 if __name__ == "__main__":

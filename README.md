@@ -34,7 +34,7 @@ $env:PYTHONUTF8 = "1"
 & $py -m streamlit run app.py
 ```
 
-Mở địa chỉ localhost do Streamlit in ra. `verify_model` kiểm tra checksum bundle trước khi khôi phục model; `verify_inference` dùng feature và prediction xuất từ Colab để kiểm tra checkpoint. PCAP Analysis và Replay đọc nội dung capture mỗi khi người dùng chọn phân tích. Tất cả đường dẫn runtime được suy ra từ thư mục repository; đường dẫn `/content/...` chỉ nằm trong notebook Colab.
+Mở địa chỉ localhost do Streamlit in ra. `verify_model` kiểm tra checksum bundle trước khi khôi phục model. `verify_inference` dùng đặc trưng và dự đoán xuất từ Colab để kiểm tra checkpoint. Các trang **Phân tích PCAP** và **Phát lại PCAP** đọc file khi người dùng bắt đầu xử lý. Tất cả đường dẫn runtime được suy ra từ thư mục repository. Đường dẫn `/content/...` chỉ nằm trong notebook Colab.
 
 ## Model và capture demo
 
@@ -59,12 +59,14 @@ Thêm `--all-test` vào cả `scripts.prepare_demo` và `scripts.verify_capture`
 
 | Trang | Chức năng |
 | --- | --- |
-| Dashboard | Trạng thái checkpoint, chỉ số phiên gần nhất, timeline, phân bố và sự kiện |
-| PCAP Analysis | Upload hoặc mở demo, xem f1–f6, lọc nhãn, xem chi tiết và tải CSV |
-| PCAP Replay | Đọc file offline, phát dự đoán theo mốc tương đối và điều khiển tốc độ |
-| Benchmark Research | Số liệu thực theo dataset, fold, model và phiên bản, so sánh V2/V4 ghép cặp |
-| Model Evaluation | Confusion matrix, ROC/PR trên các tập có điểm xuất, FP/FN và ablation |
-| About | Mô hình, định nghĩa feature, môi trường và giới hạn |
+| Bảng điều khiển | Chỉ số phiên gần nhất, lịch sử xử lý PCAP, diễn biến lưu lượng và phân bố dự đoán |
+| Phân tích PCAP | Tải lên hoặc mở file demo, xem f1–f6, lọc nhãn, xem chi tiết và tải CSV |
+| Phát lại PCAP | Đọc file ngoại tuyến, phát dự đoán theo mốc tương đối và điều khiển tốc độ |
+| Kết quả thực nghiệm | Số liệu theo tập dữ liệu, phần chia, mô hình và phiên bản, so sánh V2 và V4 theo cặp |
+| Đánh giá mô hình | Ma trận nhầm lẫn, ROC/PR, dương tính giả, âm tính giả và thí nghiệm loại bỏ thành phần |
+| Giới thiệu | Mô hình, định nghĩa đặc trưng, môi trường và giới hạn |
+
+Ứng dụng lưu tên file và kết quả theo cửa sổ trong SQLite tại `data/traffic.sqlite3`. Bảng điều khiển mặc định hiển thị phiên mới nhất sau khi tải lại trang. Mục **Lịch sử xử lý PCAP** cho phép mở phiên cũ. Trong lúc phát lại, ứng dụng lưu từng nhóm cửa sổ ngay sau khi có kết quả.
 
 ## Cấu trúc
 

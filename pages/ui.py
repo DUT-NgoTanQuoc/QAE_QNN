@@ -65,6 +65,11 @@ p, li, [data-testid="stMarkdownContainer"] { line-height: 1.55; }
   border-radius: .55rem;
   overflow: hidden;
 }
+[data-testid="stPlotlyChart"] {
+  background: var(--soc-panel);
+  border: 1px solid var(--soc-line);
+  border-radius: .65rem;
+}
 .stButton > button, .stDownloadButton > button {
   min-height: 2.7rem;
   border-radius: .45rem;
